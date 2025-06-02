@@ -20,5 +20,24 @@ module.exports = {
   // Add distributed tracing for better DB monitoring
   distributed_tracing: {
     enabled: true
+  },
+  // Application logging configuration
+  application_logging: {
+    enabled: true,
+    forwarding: {
+      enabled: true,
+      max_samples_stored: 10000
+    },
+    metrics: {
+      enabled: true
+    },
+    local_decorating: {
+      enabled: true
+    }
+  },
+  // Database monitoring
+  slow_sql: {
+    enabled: true,
+    max_samples: 10
   }
 };

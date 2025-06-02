@@ -4,11 +4,42 @@ require('newrelic');
 const express = require('express');
 const mysql = require('mysql2');
 const initializeDatabase = require('./db-init');
+const logger = require('./logger');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware to log requests
+app.use((req, res, next) => {
+  const start = Date.now();
+  
+  // Log incoming request
+  logger.info('Incoming request', {
+    method: req.method,
+    url: req.url,
+    userAgent: req.get('User-Agent'),
+    ip: req.ip
+  });
+
+  // Log response when request completes
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    logger.info('Request completed', {
+      method: req.method,
+      url: req.url,
+      statusCode: res.statusCode,
+      duration: `${duration}ms`,
+      contentLength: res.get('Content-Length')
+    });
+  });
+
+  next();
+});
+
 // Initialize database before starting server
 initializeDatabase().then(() => {
+  logger.info('Database initialization completed');
+  
   // Create MySQL connection pool after initialization
   const pool = mysql.createPool({
     connectionLimit: 10,
@@ -20,30 +51,95 @@ initializeDatabase().then(() => {
     enableKeepAlive: true
   });
 
+  logger.info('MySQL connection pool created');
+
   // Test endpoint with DB query
   app.get('/users', (req, res) => {
-    const start = Date.now();
+    const queryStart = Date.now();
+    
+    logger.info('Executing users query');
     
     pool.query('SELECT * FROM users', (err, results) => {
+      const queryDuration = Date.now() - queryStart;
+      
       if (err) {
-        console.error('Database error:', err);
-        return res.status(500).send('Database error');
+        logger.error('Database query failed', {
+          error: err.message,
+          stack: err.stack,
+          query: 'SELECT * FROM users',
+          duration: `${queryDuration}ms`
+        });
+        return res.status(500).json({ error: 'Database error' });
       }
 
-      const duration = Date.now() - start;
-      console.log(`Query executed in ${duration}ms`);
+      logger.info('Database query successful', {
+        query: 'SELECT * FROM users',
+        duration: `${queryDuration}ms`,
+        resultCount: results.length
+      });
       
-      res.json(results);
+      res.json({
+        success: true,
+        data: results,
+        meta: {
+          count: results.length,
+          queryTime: `${queryDuration}ms`
+        }
+      });
     });
   });
 
   // Simple health check
   app.get('/health', (req, res) => {
-    res.send('OK');
+    logger.info('Health check requested');
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
+  // Test endpoint to generate different log levels
+  app.get('/test-logs', (req, res) => {
+    logger.debug('Debug message from test endpoint');
+    logger.info('Info message from test endpoint');
+    logger.warn('Warning message from test endpoint');
+    logger.error('Error message from test endpoint (this is just a test)');
+    
+    res.json({
+      message: 'Test logs generated',
+      levels: ['debug', 'info', 'warn', 'error']
+    });
+  });
+
+  // Error handling middleware
+  app.use((err, req, res, next) => {
+    logger.error('Unhandled application error', {
+      error: err.message,
+      stack: err.stack,
+      url: req.url,
+      method: req.method
+    });
+    
+    res.status(500).json({
+      error: 'Internal Server Error',
+      timestamp: new Date().toISOString()
+    });
   });
 
   app.listen(PORT, () => {
+    logger.info('Server started successfully', {
+      port: PORT,
+      nodeEnv: process.env.NODE_ENV || 'development',
+      newRelicApp: process.env.NEW_RELIC_APP_NAME
+    });
     console.log(`Server running on port ${PORT}`);
-    console.log('New Relic application name:', process.env.NEW_RELIC_APP_NAME);
   });
+
+}).catch(error => {
+  logger.error('Failed to initialize application', {
+    error: error.message,
+    stack: error.stack
+  });
+  process.exit(1);
 });
