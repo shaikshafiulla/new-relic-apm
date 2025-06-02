@@ -18,7 +18,6 @@ const logger = winston.createLogger({
         winston.format.simple()
       )
     }),
-    
     new winston.transports.File({
       filename: 'logs/error.log',
       level: 'error'
@@ -28,4 +27,5 @@ const logger = winston.createLogger({
     })
   ]
 });
+
 module.exports = logger;

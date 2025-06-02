@@ -9,11 +9,9 @@ const logger = require('./logger');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware to log requests
 app.use((req, res, next) => {
   const start = Date.now();
   
-  // Log incoming request
   logger.info('Incoming request', {
     method: req.method,
     url: req.url,
@@ -21,7 +19,6 @@ app.use((req, res, next) => {
     ip: req.ip
   });
 
-  // Log response when request completes
   res.on('finish', () => {
     const duration = Date.now() - start;
     logger.info('Request completed', {
@@ -36,11 +33,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Initialize database before starting server
 initializeDatabase().then(() => {
   logger.info('Database initialization completed');
   
-  // Create MySQL connection pool after initialization
   const pool = mysql.createPool({
     connectionLimit: 10,
     host: process.env.DB_HOST || 'localhost',
@@ -53,7 +48,6 @@ initializeDatabase().then(() => {
 
   logger.info('MySQL connection pool created');
 
-  // Test endpoint with DB query
   app.get('/users', (req, res) => {
     const queryStart = Date.now();
     
@@ -89,7 +83,6 @@ initializeDatabase().then(() => {
     });
   });
 
-  // Simple health check
   app.get('/health', (req, res) => {
     logger.info('Health check requested');
     res.json({
@@ -99,7 +92,6 @@ initializeDatabase().then(() => {
     });
   });
 
-  // Test endpoint to generate different log levels
   app.get('/test-logs', (req, res) => {
     logger.debug('Debug message from test endpoint');
     logger.info('Info message from test endpoint');
@@ -112,7 +104,6 @@ initializeDatabase().then(() => {
     });
   });
 
-  // Error handling middleware
   app.use((err, req, res, next) => {
     logger.error('Unhandled application error', {
       error: err.message,

@@ -6,7 +6,6 @@ const logger = require('./logger');
 async function initializeDatabase() {
   logger.info('Starting database initialization');
   
-  // Create connection without specifying database
   const connection = await mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -19,7 +18,6 @@ async function initializeDatabase() {
   });
 
   try {
-    // Read and execute SQL file
     const sqlPath = path.join(__dirname, 'init.sql');
     logger.info('Reading SQL initialization file', { path: sqlPath });
     

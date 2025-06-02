@@ -1,7 +1,7 @@
 'use strict';
 module.exports = {
-  app_name: [process.env.NEW_RELIC_APP_NAME], // Use env variable
-  license_key: process.env.NEW_RELIC_LICENSE_KEY, // Use env variable
+  app_name: [process.env.NEW_RELIC_APP_NAME],
+  license_key: process.env.NEW_RELIC_LICENSE_KEY,
   logging: {
     level: 'info',
     filepath: 'newrelic_agent.log'
@@ -17,11 +17,9 @@ module.exports = {
       'response.headers.authorization'
     ]
   },
-  // Add distributed tracing for better DB monitoring
   distributed_tracing: {
     enabled: true
   },
-  // Application logging configuration
   application_logging: {
     enabled: true,
     forwarding: {
@@ -35,7 +33,6 @@ module.exports = {
       enabled: true
     }
   },
-  // Database monitoring
   slow_sql: {
     enabled: true,
     max_samples: 10

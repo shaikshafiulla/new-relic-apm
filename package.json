@@ -1,7 +1,7 @@
 {
   "name": "yh-newrelic",
   "version": "1.0.0",
-  "description": "",
+  "description": "newrelic apm for db tracing and application monitoring",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -17,6 +17,6 @@
     "mysql": "^2.18.1",
     "mysql2": "^3.14.1",
     "newrelic": "^12.20.0",
-    "winston": "^3.11.0"
+    "winston": "^3.17.0"
   }
 }
